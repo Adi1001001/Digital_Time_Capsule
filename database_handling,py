@@ -1,0 +1,32 @@
+import sqlite3
+import digital_time_capsule
+
+conn = sqlite3.connect('employee.db') # creating the database
+
+c = conn.cursor()
+
+# below is only used if you have made an error in your database
+# c.execute("DROP TABLE IF EXISTS memories")
+
+# creating the database
+c.execute("""CREATE TABLE IF NOT EXISTS memories (
+          memory text,
+          year int,
+          month int,
+          day int,
+          hour int,
+          UNIQUE(memory, year, month, day)
+          )""")
+
+try:
+    c.execute("INSERT INTO memories VALUES ('HAPPY NEW YEARS EVE!!!', 2024, 12, 31, 24)")
+    print("Memory added successfully!")
+except sqlite3.IntegrityError:
+    print('You have already entered this memory!')
+
+c.execute("SELECT * FROM memories WHERE year=2024")
+print(c.fetchall())
+
+# closing
+conn.commit()
+conn.close()
