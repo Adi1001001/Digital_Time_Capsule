@@ -1,32 +1,90 @@
 import sqlite3
-import digital_time_capsule
-
-conn = sqlite3.connect('employee.db') # creating the database
-
-c = conn.cursor()
 
 # below is only used if you have made an error in your database
+conn = sqlite3.connect('employee.db')
+# c = conn.cursor()
 # c.execute("DROP TABLE IF EXISTS memories")
+# conn.commit()
+# conn.close()
 
-# creating the database
-c.execute("""CREATE TABLE IF NOT EXISTS memories (
-          memory text,
-          year int,
-          month int,
-          day int,
-          hour int,
-          UNIQUE(memory, year, month, day)
-          )""")
+def insert_memory(memory, year, month, day, hour, image_path = None, reminder_day = None, reminder_month = None, reminder_year = None, reminder_hour = None):
+    conn = sqlite3.connect('employee.db') # connecting to the database file
 
-try:
-    c.execute("INSERT INTO memories VALUES ('HAPPY NEW YEARS EVE!!!', 2024, 12, 31, 24)")
-    print("Memory added successfully!")
-except sqlite3.IntegrityError:
-    print('You have already entered this memory!')
+    c = conn.cursor()
+    # creating the database
+    c.execute("""CREATE TABLE IF NOT EXISTS memories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            memory text NOT NULL,
+            year int NOT NULL,
+            month int NOT NULL,
+            day int NOT NULL,
+            hour int NOT NULL,
+            image_path text,
+            reminder_day int,
+            reminder_month int,
+            reminder_year int,
+            reminder_hour int,
+            UNIQUE(memory, year, month, day)
+            )""")
+    
+    if image_path:
+        try:
+            if reminder_day:
+                c.execute("INSERT INTO memories (memory, year, month, day, hour, image_path, reminder_day, reminder_month, reminder_year, reminder_hour) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (memory, year, month, day, hour, image_path, reminder_day, reminder_month, reminder_year, reminder_hour))
+                print("Memory added successfully!")
+                error = False
+            else:
+                c.execute("INSERT INTO memories (memory, year, month, day, hour, image_path) VALUES (?, ?, ?, ?, ?, ?)", (memory, year, month, day, hour, image_path))
+                print("Memory added successfully!")
+                error = False
+        except sqlite3.IntegrityError:
+            error = True
+            print('You have already entered this memory!')
+    else:
+        try:
+            if reminder_day:
+                c.execute("INSERT INTO memories (memory, year, month, day, hour, reminder_day, reminder_month, reminder_year, reminder_hour) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (memory, year, month, day, hour, reminder_day, reminder_month, reminder_year, reminder_hour))
+                print("Memory added successfully!")
+                error = False
+            else:
+                c.execute("INSERT INTO memories (memory, year, month, day, hour) VALUES (?, ?, ?, ?, ?)", (memory, year, month, day, hour))
+                print("Memory added successfully!")
+                error = False
+        except sqlite3.IntegrityError:
+            error = True
+            print('You have already entered this memory!')
 
-c.execute("SELECT * FROM memories WHERE year=2024")
-print(c.fetchall())
+    c.execute("SELECT * FROM memories WHERE year=2025")
+    print(c.fetchall())
 
-# closing
-conn.commit()
-conn.close()
+    # closing
+    conn.commit()
+    conn.close()
+
+    return error
+
+def get_memories():
+    conn = sqlite3.connect('employee.db') # connecting to the database file
+    c = conn.cursor()
+
+    # Fetch the most recent entries
+    try:
+        query = "SELECT * FROM memories ORDER BY ID DESC"
+        c.execute(query)
+        return c.fetchall()
+    except sqlite3.OperationalError:
+        return None
+
+    # closing
+    conn.commit()
+    conn.close()
+
+def delete_memories(id):
+    conn = sqlite3.connect('employee.db') # connecting to the database file
+    c = conn.cursor()
+
+    c.execute(f"DELETE FROM memories WHERE id = {id}")
+
+    # closing
+    conn.commit()
+    conn.close()
